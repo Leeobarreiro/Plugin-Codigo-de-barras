@@ -1301,40 +1301,6 @@ function generates_password() {
     return $password;
 }
 
-
-/**
- * Generate QR code passwords.
- *
- * @param stdClass $session
- */
-function attendance_generate_passwords($session) {
-    global $DB;
-
-    $users = $DB->get_records_sql("
-        SELECT u.*
-        FROM {user} u
-        JOIN {attendance_log} al ON al.studentid = u.id
-        WHERE al.sessionid = :sessionid
-    ", ['sessionid' => $session->id]);
-
-    $used_passwords = array();
-
-    foreach ($users as $user) {
-        do {
-            $password = generate_random_password();
-        } while (in_array($password, $used_passwords));
-        $used_passwords[] = $password;
-
-        $user->password = $password;
-        $DB->update_record('attendance_log', $user);
-    }
-
-    $session->studentpassword = '';
-    $DB->update_record('attendance_sessions', $session);
-}
-
-
-
 /*
  * Render JS for rotate QR code passwords.
  *
