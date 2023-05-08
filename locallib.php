@@ -1246,8 +1246,20 @@ function construct_session_full_date_time($datetime, $duration) {
  * @param stdClass $session
  */
 function attendance_renderpassword($session) {
-    echo html_writer::tag('h2', get_string('passwordgrp', 'attendance'));
-    echo html_writer::span($session->studentpassword, 'student-password');
+    global $DB, $OUTPUT;
+
+    $students = $DB->get_records('attendance_log', array('sessionid' => $session->id, 'status' => '1'));
+    if (!empty($students)) {
+        echo $OUTPUT->heading(get_string('password', 'attendance'));
+        $table = new html_table();
+        $table->head = array(get_string('name'), get_string('password', 'attendance'));
+        $table->attributes['class'] = 'generaltable';
+        foreach ($students as $student) {
+            $fullname = $DB->get_field('user', 'fullname', array('id' => $student->studentid));
+            $table->data[] = array($fullname, $student->password);
+        }
+        echo html_writer::table($table);
+    }
 }
 
 /**
@@ -1256,21 +1268,39 @@ function attendance_renderpassword($session) {
  * @param stdClass $session
  */
 function attendance_renderqrcode($session) {
-    global $CFG;
+    global $CFG, $OUTPUT;
 
-    if (strlen($session->studentpassword) > 0) {
-        $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?qrpass=' .
-            $session->studentpassword . '&sessid=' . $session->id;
-    } else {
-        $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?sessid=' . $session->id;
-    }
+    require_once($CFG->libdir.'/tcpdf/tcpdf_barcodes_2d.php');
 
-    echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
+    $url = new moodle_url('/mod/attendance/view.php', ['id' => $session->attendanceid, 'sessid' => $session->id, 'action' => 'qr']);
 
-    $barcode = new TCPDF2DBarcode($qrcodeurl, 'QRCODE');
-    $image = $barcode->getBarcodePngData(15, 15);
-    echo html_writer::img('data:image/png;base64,' . base64_encode($image), get_string('qrcode', 'attendance'));
+    $text = $url->out(false);
+    $text .= 'Senha: '.$session->studentpassword;
+
+    $code = new TCPDF2DBarcode($text, 'QRCODE,H');
+
+    $html = html_writer::start_div();
+    $html .= $code->getBarcodeHTML(5, 5, 'black');
+    $html .= html_writer::end_div();
+
+    echo $OUTPUT->box($html);
 }
+
+
+/**
+ * Generate QR code passwords 1
+ *
+ */
+
+function generate_password() {
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $password = '';
+    for ($i = 0; $i < 8; $i++) {
+        $password .= $chars[rand(0, strlen($chars) - 1)];
+    }
+    return $password;
+}
+
 
 /**
  * Generate QR code passwords.
@@ -1279,15 +1309,15 @@ function attendance_renderqrcode($session) {
  */
 function attendance_generate_passwords($session) {
     global $DB;
-    $attconfig = get_config('attendance');
-    $password = array();
-
-    for ($i = 0; $i < 30; $i++) {
-        array_push($password, array("attendanceid" => $session->id,
-            "password" => mt_rand(1000, 10000), "expirytime" => time() + ($attconfig->rotateqrcodeinterval * $i)));
+    $students = $DB->get_records('attendance_log', array('sessionid' => $session->id, 'status' => '1'));
+    foreach ($students as $student) {
+        $password = generate_password();
+        $student->password = $password;
+        $DB->update_record('attendance_log', $student);
     }
 
-    $DB->insert_records('attendance_rotate_passwords', $password);
+    $session->studentpassword = 1;
+    $DB->update_record('attendance_sessions', $session);
 }
 
 /**

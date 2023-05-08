@@ -79,6 +79,27 @@ class attendance_QRCodeRotate {
             })
             .then((resp) => resp.json()) // Transform the data into json
             .then(function(data) {
+                parent.element = data;
+                parent.qrCodeSetUp();
+                parent.changeQRCode(parent.element.password); // Chama o método changeQRCode() para gerar o primeiro código QR com a senha fixa
+                parent.startRotating();
+            }).catch(err => {
+                console.error("Error fetching QR passwords from API.");
+        });
+    }
+}
+
+
+/* fetchAndRotate() {
+        var parent = this;
+
+        fetch('password.php?session='+this.sessionId+'&returnpasswords=1', {
+                headers: {
+                    'Content-Type': 'application/json; charset=utf-8'
+                }
+            })
+            .then((resp) => resp.json()) // Transform the data into json
+            .then(function(data) {
                 parent.password = data;
                 parent.qrCodeSetUp();
                 // this.changeQRCode( password );
@@ -87,4 +108,4 @@ class attendance_QRCodeRotate {
                 console.error("Error fetching QR passwords from API.");
         });
     }
-}
+} */
