@@ -1262,11 +1262,11 @@ function attendance_renderpassword($session) {
     }
 }
 
-/*
+/** 
  * Render the session QR code.
  *
  * @param stdClass $session
- 
+*/
 function attendance_renderqrcode($session) {
     global $CFG, $OUTPUT;
 
@@ -1285,7 +1285,7 @@ function attendance_renderqrcode($session) {
 
     echo $OUTPUT->box($html);
 }
-*/
+
 
 /**
  * Generate QR code passwords 1
