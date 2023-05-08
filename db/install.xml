@@ -167,4 +167,28 @@
       </KEYS>
     </TABLE>
   </TABLES>
+  <TABLES>
+    <TABLE NAME="attendance_passwords" COMMENT="Table for storing attendance passwords." PREVIOUS="attendance">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" AUTOINCREMENT="true">
+          <KEYS>
+            <PRIMARYKEY NAME="primary" FIELDS="id"/>
+          </KEYS>
+        </FIELD>
+        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" COMMENT="Attendance session ID."></FIELD>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" COMMENT="User ID."></FIELD>
+        <FIELD NAME="password" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="Generated password."></FIELD>
+        <FIELD NAME="datecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" COMMENT="Date and time when the password was created."></FIELD>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="sessionid" FIELDS="sessionid" FOREIGNKEY="true" REFTABLE="attendance_sessions" REFFIELDS="id" ONDELETE="CASCADE" COMMENT="Foreign key to the attendance session."></KEY>
+        <KEY NAME="userid" FIELDS="userid" FOREIGNKEY="true" REFTABLE="user" REFFIELDS="id" ONDELETE="CASCADE" COMMENT="Foreign key to the user."></KEY>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+  <SEQUENCES>
+    <SEQUENCE NAME="attendance_passwords_id_seq" COMMENT="Sequence for the attendance passwords table."></SEQUENCE>
+  </SEQUENCES>
 </XMLDB>
+
+
