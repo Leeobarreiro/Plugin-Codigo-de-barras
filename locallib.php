@@ -1262,11 +1262,11 @@ function attendance_renderpassword($session) {
     }
 }
 
-/**
+/*
  * Render the session QR code.
  *
  * @param stdClass $session
- */
+ 
 function attendance_renderqrcode($session) {
     global $CFG, $OUTPUT;
 
@@ -1285,7 +1285,7 @@ function attendance_renderqrcode($session) {
 
     echo $OUTPUT->box($html);
 }
-
+*/
 
 /**
  * Generate QR code passwords 1
@@ -1335,11 +1335,11 @@ function attendance_generate_passwords($session) {
 
 
 
-/**
+/*
  * Render JS for rotate QR code passwords.
  *
  * @param stdClass $session
- */
+ 
 function attendance_renderqrcoderotate($session) {
     // Load required js.
     echo html_writer::tag('script', '',
@@ -1367,6 +1367,8 @@ function attendance_renderqrcoderotate($session) {
         document.getElementById("rotate-time"));
     </script>';
 }
+
+*/
 
 /**
  * Return QR code passwords.
