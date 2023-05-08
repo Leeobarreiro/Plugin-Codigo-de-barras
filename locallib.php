@@ -1292,7 +1292,7 @@ function attendance_renderqrcode($session) {
  *
  */
 
-function generate_password() {
+function generates_password() {
     $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     $password = '';
     for ($i = 0; $i < 8; $i++) {
