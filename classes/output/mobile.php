@@ -449,5 +449,4 @@ class mobile {
             'otherdata' => $otherdata
         ];
     }
-
 }
