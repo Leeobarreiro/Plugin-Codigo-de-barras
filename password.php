@@ -29,31 +29,6 @@ require_once(dirname(__FILE__).'/../../config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once($CFG->libdir.'/tcpdf/tcpdf_barcodes_2d.php'); // Used for generating qrcode.
 
-function attendance_generate_passwords($session) {
-    global $DB;
-
-    $users = $DB->get_records_sql("
-        SELECT u.*
-        FROM {user} u
-        JOIN {attendance_log} al ON al.studentid = u.id
-        WHERE al.sessionid = :sessionid
-    ", ['sessionid' => $session->id]);
-
-    $used_passwords = array();
-
-    foreach ($users as $user) {
-        do {
-            $password = generate_random_password();
-        } while (in_array($password, $used_passwords));
-        $used_passwords[] = $password;
-
-        $user->password = $password;
-        $DB->update_record('attendance_log', $user);
-    }
-
-    $session->studentpassword = '';
-    $DB->update_record('attendance_sessions', $session);
-}
 
 
 function generate_random_password() {

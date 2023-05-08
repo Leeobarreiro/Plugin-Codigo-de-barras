@@ -1309,16 +1309,31 @@ function generate_password() {
  */
 function attendance_generate_passwords($session) {
     global $DB;
-    $students = $DB->get_records('attendance_log', array('sessionid' => $session->id, 'status' => '1'));
-    foreach ($students as $student) {
-        $password = generate_password();
-        $student->password = $password;
-        $DB->update_record('attendance_log', $student);
+
+    $users = $DB->get_records_sql("
+        SELECT u.*
+        FROM {user} u
+        JOIN {attendance_log} al ON al.studentid = u.id
+        WHERE al.sessionid = :sessionid
+    ", ['sessionid' => $session->id]);
+
+    $used_passwords = array();
+
+    foreach ($users as $user) {
+        do {
+            $password = generate_random_password();
+        } while (in_array($password, $used_passwords));
+        $used_passwords[] = $password;
+
+        $user->password = $password;
+        $DB->update_record('attendance_log', $user);
     }
 
-    $session->studentpassword = 1;
+    $session->studentpassword = '';
     $DB->update_record('attendance_sessions', $session);
 }
+
+
 
 /**
  * Render JS for rotate QR code passwords.
