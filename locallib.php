@@ -1292,14 +1292,29 @@ function attendance_renderqrcode($session) {
  *
  */
 
-function generates_password() {
-    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    $password = '';
-    for ($i = 0; $i < 8; $i++) {
-        $password .= $chars[rand(0, strlen($chars) - 1)];
-    }
-    return $password;
-}
+ function generateUniquePassword() {
+     $length = 10;
+     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+     $charactersLength = strlen($characters);
+     $randomString = '';
+     for ($i = 0; $i < $length; $i++) {
+         $randomString .= $characters[rand(0, $charactersLength - 1)];
+     }
+     return $randomString;
+ }
+ 
+ function generateUniqueQRCode() {
+     $length = 12;
+     $characters = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+     $charactersLength = strlen($characters);
+     $randomString = '';
+     for ($i = 0; $i < $length; $i++) {
+         $randomString .= $characters[rand(0, $charactersLength - 1)];
+     }
+     return $randomString;
+ }
+ 
+ ?>
 
 /*
  * Render JS for rotate QR code passwords.
@@ -1325,25 +1340,22 @@ function attendance_renderqrcoderotate($session) {
     echo html_writer::tag('div', '', ['id' => 'text-password']); // Div to display password.
     echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
     echo html_writer::tag('div', '', ['id' => 'qrcode']); // Div to display qr code.
-    // Js to start the password manager.
+     Js to start the password manager.
     echo '
-    <script type="text/javascript">
-        let qrCodeRotate = new attendance_QRCodeRotate();
-        qrCodeRotate.start(' . $session->id . ', document.getElementById("qrcode"), document.getElementById("text-password"),
-        document.getElementById("rotate-time"));
-    </script>';
-}
+    
+} 
 
 */
 
-/**
+/*
  * Return QR code passwords.
  *
  * @param stdClass $session
- */
+ 
 function attendance_return_passwords($session) {
     global $DB;
 
     $sql = 'SELECT * FROM {attendance_rotate_passwords} WHERE attendanceid = ? AND expirytime > ? ORDER BY expirytime ASC';
     return json_encode($DB->get_records_sql($sql, ['attendanceid' => $session->id, time()], $strictness = IGNORE_MISSING));
 }
+*/
