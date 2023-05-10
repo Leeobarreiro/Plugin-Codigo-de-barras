@@ -46,6 +46,9 @@ class mod_attendance_mod_form extends moodleform_mod {
         $mform    =& $this->_form;
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
+        $mform->addElement('text', 'studentid', get_string('studentid', 'attendance'), array('size' => '10'));
+        $mform->setType('studentid', PARAM_INT);
+        $mform->addRule('studentid', null, 'required', null, 'client');
 
         $mform->addElement('text', 'name', get_string('name'), array('size' => '64'));
         $mform->setType('name', PARAM_TEXT);
