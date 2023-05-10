@@ -16,8 +16,10 @@ class AttendanceQRCode {
       this.sessionId = sessionId;
       this.qrCodeHTMLElement = qrCodeHTMLElement;
       this.studentId = studentId;
+      console.log('Student ID:', this.studentId); // imprime o valor do ID do aluno no console
       this.generateAndShowQRCode();
     }
+    
   
     qrCodeSetUp() {
       this.qrCodeInstance = new QRCode(this.qrCodeHTMLElement, {
