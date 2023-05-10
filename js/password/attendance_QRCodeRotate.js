@@ -1,111 +1,73 @@
 /**
- *
  * @copyright  2019 Maksud R
  * @package   mod_attendance
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- *
  */
 
-class attendance_QRCodeRotate {
-
+class AttendanceQRCode {
     constructor() {
-        this.sessionId = 0;
-        this.password = "";
-        this.qrCodeInstance = "";
-        this.qrCodeHTMLElement = "";
+      this.sessionId = 0;
+      this.qrCodeInstance = "";
+      this.qrCodeHTMLElement = "";
+      this.studentId = 0;
     }
-
-    start(sessionId, qrCodeHTMLElement, textPasswordHTMLElement, timerHTMLElement) {
-        this.sessionId = sessionId;
-        this.qrCodeHTMLElement = qrCodeHTMLElement;
-        this.textPasswordHTMLElement = textPasswordHTMLElement;
-        this.timerHTMLElement = timerHTMLElement;
-        this.fetchAndRotate();
+  
+    start(sessionId, qrCodeHTMLElement, studentId) {
+      this.sessionId = sessionId;
+      this.qrCodeHTMLElement = qrCodeHTMLElement;
+      this.studentId = studentId;
+      this.generateAndShowQRCode();
     }
-
+  
     qrCodeSetUp() {
-        this.qrCodeInstance = new QRCode(this.qrCodeHTMLElement, {
-            text: '',
-            width: 328,
-            height: 328,
-            colorDark : "#000000",
-            colorLight : "#ffffff",
-            correctLevel : QRCode.CorrectLevel.H
-        });
+      this.qrCodeInstance = new QRCode(this.qrCodeHTMLElement, {
+        text: "",
+        width: 300,
+        height: 300,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H,
+      });
     }
-
-    changeQRCode(password) {
-        var qrcodeurl = document.URL.substr(0,document.URL.lastIndexOf('/')) + '/attendance.php?qrpass=' + password + '&sessid=' + this.sessionId;
-        this.qrCodeInstance.clear();
-        this.qrCodeInstance.makeCode(qrcodeurl);
-        // display new password
-        this.textPasswordHTMLElement.innerHTML = '<h2>'+password+'</h2>';
+  
+    generateQRCode(password) {
+      const qrcodeurl = `${window.location.href}/attendance.php?qrpass=${password}&sessid=${this.sessionId}`;
+      this.qrCodeInstance.clear();
+      this.qrCodeInstance.makeCode(qrcodeurl);
     }
-
-    updateTimer(timeLeft) {
-        this.timerHTMLElement.innerHTML = '<h3>Time left: '+timeLeft+'</h3>';
+  
+    generateAndShowQRCode() {
+      // gerar senha usando o ID do aluno
+      const password = md5(`${this.studentId}salt`);
+      this.qrCodeSetUp();
+      this.generateQRCode(password);
     }
-
+  
+    fetchPasswords() {
+      return fetch(
+        `password.php?session=${this.sessionId}&returnpasswords=1`,
+        {
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+          },
+        }
+      ).then((resp) => resp.json());
+    }
+  
     startRotating() {
-        var parent = this;
-
-        setInterval(function() {
-            var found = Object.values(parent.password).find(function(element) {
-
-                if (element.expirytime > Math.round(new Date().getTime() / 1000)) {
-                    return element;
-                }
-            });
-
-            if (found == undefined) {
-                location.reload(true);
-            } else {
-                parent.changeQRCode(found.password);
-                parent.updateTimer(found.expirytime - Math.round(new Date().getTime() / 1000));
-
-            }
-
-        }, 1000);
-
+      setInterval(() => {
+        this.fetchPasswords()
+          .then((data) => {
+            const password = data.find(
+              (element) => element.studentid === this.studentId
+            ).password;
+            this.generateQRCode(password);
+          })
+          .catch((err) => {
+            console.error("Error fetching QR passwords from API.");
+            location.reload(true);
+          });
+      }, 1000);
     }
-
-    fetchAndRotate() {
-        var parent = this;
-
-        fetch('password.php?session='+this.sessionId+'&returnpasswords=1', {
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
-                }
-            })
-            .then((resp) => resp.json()) // Transform the data into json
-            .then(function(data) {
-                parent.element = data;
-                parent.qrCodeSetUp();
-                parent.changeQRCode(parent.element.password); // Chama o método changeQRCode() para gerar o primeiro código QR com a senha fixa
-                parent.startRotating();
-            }).catch(err => {
-                console.error("Error fetching QR passwords from API.");
-        });
-    }
-}
-
-
-/* fetchAndRotate() {
-        var parent = this;
-
-        fetch('password.php?session='+this.sessionId+'&returnpasswords=1', {
-                headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
-                }
-            })
-            .then((resp) => resp.json()) // Transform the data into json
-            .then(function(data) {
-                parent.password = data;
-                parent.qrCodeSetUp();
-                // this.changeQRCode( password );
-                parent.startRotating();
-            }).catch(err => {
-                console.error("Error fetching QR passwords from API.");
-        });
-    }
-} */
+  }
+  

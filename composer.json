@@ -6,10 +6,5 @@
     },
     "extra": {
         "installer-name": "attendance"
-    },
-    "config": {
-        "allow-plugins": {
-            "composer/installers": true
-        }
     }
 }

@@ -99,7 +99,16 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
-
+    
+    'mod/attendance:manageattendancesessions' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'teacher' => CAP_ALLOW
+        ),
+        'clonepermissionsfrom' => 'moodle/site:manageactivities'
+    ),
+    
     'mod/attendance:export' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'read',

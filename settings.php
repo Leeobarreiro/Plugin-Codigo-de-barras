@@ -52,7 +52,7 @@ if ($ADMIN->fulltree) {
 
     $settings->add(new admin_setting_configcheckbox('attendance/studentscanmark',
         get_string('studentscanmark', 'attendance'), get_string('studentscanmark_desc', 'attendance'), 1));
-
+/*
     $settings->add(new admin_setting_configtext('attendance/rotateqrcodeinterval',
         get_string('rotateqrcodeinterval', 'attendance'),
         get_string('rotateqrcodeinterval_desc', 'attendance'), '15', PARAM_INT));
@@ -60,6 +60,8 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configtext('attendance/rotateqrcodeexpirymargin',
             get_string('rotateqrcodeexpirymargin', 'attendance'),
             get_string('rotateqrcodeexpirymargin_desc', 'attendance'), '2', PARAM_INT));
+
+ */
 
     $settings->add(new admin_setting_configcheckbox('attendance/studentscanmarksessiontime',
         get_string('studentscanmarksessiontime', 'attendance'),

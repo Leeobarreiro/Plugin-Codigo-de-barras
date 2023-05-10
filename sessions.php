@@ -28,8 +28,15 @@ require_once($CFG->dirroot.'/lib/formslib.php');
 
 $pageparams = new mod_attendance_sessions_page_params();
 
-$id                     = required_param('id', PARAM_INT);
-$pageparams->action     = required_param('action', PARAM_INT);
+$id = required_param('id', PARAM_INT);
+if (!$cm = get_coursemodule_from_id('attendance', $id)) {
+    print_error('invalidcoursemodule');
+}
+$pageparams->action = required_param('action', PARAM_INT);
+if (empty($pageparams->action)) {
+    $url = new moodle_url('/mod/attendance/view.php', array('id' => $id));
+    redirect($url, get_string('invalidaction', 'mod_attendance'), 2);
+}
 
 if (optional_param('deletehiddensessions', false, PARAM_TEXT)) {
     $pageparams->action = mod_attendance_sessions_page_params::ACTION_DELETE_HIDDEN;

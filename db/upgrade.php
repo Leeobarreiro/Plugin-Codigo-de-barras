@@ -237,7 +237,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
         $table = new xmldb_table('attendance_sessions');
 
         $field = new xmldb_field('studentpassword');
-        $field->set_attributes(XMLDB_TYPE_CHAR, '50', null, false, null, '', 'studentscanmark');
+        $field->set_attributes(XMLDB_TYPE_CHAR, '20', null, false, null, '', 'studentscanmark');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -587,7 +587,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
     }
 
     if ($oldversion < 2019062200) {
-/*
+
         // Define table attendance_rotate_passwords to be created.
         $table = new xmldb_table('attendance_rotate_passwords');
 
@@ -616,7 +616,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
 
         // Define field rotateqrcodesecret to be added to attendance_sessions.
         $table = new xmldb_table('attendance_sessions');
-        $field = new xmldb_field('rotateqrcodesecret', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'rotateqrcode');
+        $field = new xmldb_field('rotateqrcodesecret', XMLDB_TYPE_CHAR, '20', null, null, null, null, 'rotateqrcode');
 
         // Conditionally launch add field rotateqrcodesecret.
         if (!$dbman->field_exists($table, $field)) {
@@ -625,7 +625,7 @@ function xmldb_attendance_upgrade($oldversion=0) {
 
         // Attendance savepoint reached.
         upgrade_mod_savepoint(true, 2019062200, 'attendance');
-*/
+
     }
 
     if ($oldversion < 2020072900) {
@@ -649,32 +649,6 @@ function xmldb_attendance_upgrade($oldversion=0) {
         // Attendance savepoint reached.
         upgrade_mod_savepoint(true, 2021050700, 'attendance');
     }
-
-    // Cria tabela para armazenar senhas personalizadas para cada aluno.
-function xmldb_attendance_upgrade($oldversion) {
-    global $DB;
-
-    $table = new xmldb_table('attendance_custom_passwords');
-    $field_id = new xmldb_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-    $field_userid = new xmldb_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-    $field_sessionid = new xmldb_field('sessionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-    $field_password = new xmldb_field('password', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
-    $table->addField($field_id);
-    $table->addField($field_userid);
-    $table->addField($field_sessionid);
-    $table->addField($field_password);
-    $table->addKey('primary', XMLDB_KEY_PRIMARY, array('id'));
-    $table->addIndex('userid_sessionid', XMLDB_INDEX_UNIQUE, array('userid', 'sessionid'));
-
-    if (!$DB->table_exists('attendance_custom_passwords')) {
-        $dbman = $DB->get_manager();
-        $dbman->create_table($table);
-    }
-
-    // Atualiza o esquema do banco de dados.
-    upgrade_plugin_savepoint(true, 2019051100, 'attendance');
-}
-
 
     return $result;
 }

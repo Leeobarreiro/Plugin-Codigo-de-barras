@@ -51,7 +51,7 @@
         <FIELD NAME="calendarevent" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="includeqrcode" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Include a QR code image when displaying the password"/>
         <FIELD NAME="rotateqrcode" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="rotateqrcodesecret" TYPE="char" LENGTH="10" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="rotateqrcodesecret" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Primary key for attendance_sessions"/>
@@ -167,28 +167,22 @@
       </KEYS>
     </TABLE>
   </TABLES>
-  <TABLES>
-    <TABLE NAME="attendance_passwords" COMMENT="Table for storing attendance passwords." PREVIOUS="attendance">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" AUTOINCREMENT="true">
-          <KEYS>
-            <PRIMARYKEY NAME="primary" FIELDS="id"/>
-          </KEYS>
-        </FIELD>
-        <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" COMMENT="Attendance session ID."></FIELD>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" COMMENT="User ID."></FIELD>
-        <FIELD NAME="password" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="Generated password."></FIELD>
-        <FIELD NAME="datecreated" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0" COMMENT="Date and time when the password was created."></FIELD>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="sessionid" FIELDS="sessionid" FOREIGNKEY="true" REFTABLE="attendance_sessions" REFFIELDS="id" ONDELETE="CASCADE" COMMENT="Foreign key to the attendance session."></KEY>
-        <KEY NAME="userid" FIELDS="userid" FOREIGNKEY="true" REFTABLE="user" REFFIELDS="id" ONDELETE="CASCADE" COMMENT="Foreign key to the user."></KEY>
-      </KEYS>
-    </TABLE>
-  </TABLES>
-  <SEQUENCES>
-    <SEQUENCE NAME="attendance_passwords_id_seq" COMMENT="Sequence for the attendance passwords table."></SEQUENCE>
-  </SEQUENCES>
+<INSTALL>
+    <TABLES>
+        <TABLE NAME="attendance_sessions_students" COMMENT="Table for storing student attendance in sessions">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" AUTOINCREMENT="true" SEQUENCE="true"/>
+                <FIELD NAME="sessionid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0"/>
+                <FIELD NAME="studentid" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0"/>
+                <FIELD NAME="status" TYPE="char" LENGTH="1" NOTNULL="true" DEFAULT="P"/>
+                <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" DEFAULT="0"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+                <KEY NAME="sessionid" TYPE="foreign" FIELDS="sessionid" REFTABLE="attendance_sessions" REFFIELDS="id"/>
+                <KEY NAME="studentid" TYPE="foreign" FIELDS="studentid" REFTABLE="user" REFFIELDS="id"/>
+            </KEYS>
+        </TABLE>
+    </TABLES>
+</INSTALL>
 </XMLDB>
-
-

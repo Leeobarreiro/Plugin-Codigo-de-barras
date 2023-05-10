@@ -70,11 +70,12 @@ if ($attforsession->rotateqrcode == 1) {
 
         if ($qrpassflag) {
             // Create and store the token.
-            setcookie($cookiename, $secrethash, time() + (60 * 5), "/");
+            setcookie($cookiename, "hardcoded_value", time() + (60 * 5), "/");  // replace with hardcoded value
         } else {
             // Flag error.
             throw new moodle_exception('qr_pass_wrong', 'mod_attendance', $url);
         }
+        
     }
 }
 

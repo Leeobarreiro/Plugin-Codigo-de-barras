@@ -1,5 +1,4 @@
 <?php
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -30,16 +29,8 @@ require_once(dirname(__FILE__).'/../../config.php');
 require_once(dirname(__FILE__).'/locallib.php');
 require_once($CFG->libdir.'/tcpdf/tcpdf_barcodes_2d.php'); // Used for generating qrcode.
 
-function generate_unique_password($sessionid, $userid) {
-    // Concatenate the session ID and user ID to create a unique password.
-    // You could use other methods to generate unique passwords as well.
-    return md5($sessionid . $userid);
-}
-
-$sessionid = required_param('session', PARAM_INT);
-$userid = $USER->id;
-
-$session = $DB->get_record('attendance_sessions', array('id' => $sessionid), '*', MUST_EXIST);
+$session = required_param('session', PARAM_INT);
+$session = $DB->get_record('attendance_sessions', array('id' => $session), '*', MUST_EXIST);
 
 $cm = get_coursemodule_from_instance('attendance', $session->attendanceid);
 require_login($cm->course, $cm);
@@ -50,27 +41,36 @@ if (!has_any_capability($capabilities, $context)) {
     exit;
 }
 
-// Generate a unique password and QR code for the current user and session.
-$password = generate_unique_password($sessionid, $userid);
-$qr_code = md5($password);
-
-// Update the attendance log with the generated password and QR code.
-$log = $DB->get_record('attendance_log', array('sessionid' => $sessionid, 'studentid' => $userid), '*', MUST_EXIST);
-$log->password = $password;
-$log->qrcode = $qr_code;
-$DB->update_record('attendance_log', $log);
+if (optional_param('returnpasswords', 0, PARAM_INT) == 1) {
+    header('Content-Type: application/json');
+    echo attendance_return_passwords($session);
+    exit;
+}
 
 $PAGE->set_url('/mod/attendance/password.php');
 $PAGE->set_pagelayout('popup');
+
 $PAGE->set_context(context_system::instance());
+
 $PAGE->set_title(get_string('password', 'attendance'));
 
 echo $OUTPUT->header();
 
-// Display the QR code to the user.
-echo '<img src="https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl='.$qr_code.'&choe=UTF-8" alt="'.get_string('qrcode', 'attendance').'"/>';
+$showpassword = (isset($session->studentpassword) && strlen($session->studentpassword) > 0);
+$showqr = (isset($session->includeqrcode) && $session->includeqrcode == 1);
+$rotateqr = (isset($session->rotateqrcode) && $session->rotateqrcode == 1);
 
-// Display the password to the user.
-echo '<p>'.get_string('password', 'attendance').': '.$password.'</p>';
+if ($showpassword  && !$rotateqr) {
+    attendance_renderpassword($session);
+}
+
+if ($showqr) {
+    attendance_renderqrcode($session);
+}
+
+if ($rotateqr) {
+    attendance_generate_passwords($session);
+    attendance_renderqrcoderotate($session);
+}
 
 echo $OUTPUT->footer();

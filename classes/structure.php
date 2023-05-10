@@ -539,7 +539,7 @@ class mod_attendance_structure {
 
         return $sess->id;
     }
-
+   
     /**
      * Update session from form.
      *
@@ -548,24 +548,35 @@ class mod_attendance_structure {
      */
     public function update_session_from_form_data($formdata, $sessionid) {
         global $DB;
+       
+        $student = new stdClass();
+        $student->studentid = 123; // Definir a propriedade studentid
+        
+        // Acessar as propriedades do objeto $student
+        $student->studentid = $formdata->studentid;{
+            // Acessar a propriedade studentid
+            $id = $student->studentid;
+            // fazer algo com a propriedade $id, como exibi-la
+            echo "O ID do estudante é: " . $id;
+        }
 
         if (!$sess = $DB->get_record('attendance_sessions', array('id' => $sessionid) )) {
             throw new moodle_exception('No such session in this course');
         }
-
+    
         $sesstarttime = $formdata->sestime['starthour'] * HOURSECS + $formdata->sestime['startminute'] * MINSECS;
         $sesendtime = $formdata->sestime['endhour'] * HOURSECS + $formdata->sestime['endminute'] * MINSECS;
-
+    
         $sess->sessdate = $formdata->sessiondate + $sesstarttime;
         $sess->duration = $sesendtime - $sesstarttime;
-
+    
         $description = file_save_draft_area_files($formdata->sdescription['itemid'],
             $this->context->id, 'mod_attendance', 'session', $sessionid,
             array('subdirs' => false, 'maxfiles' => -1, 'maxbytes' => 0), $formdata->sdescription['text']);
         $sess->description = $description;
         $sess->descriptionformat = $formdata->sdescription['format'];
         $sess->calendarevent = empty($formdata->calendarevent) ? 0 : $formdata->calendarevent;
-
+    
         $sess->studentscanmark = 0;
         $sess->autoassignstatus = 0;
         $sess->studentpassword = '';
@@ -577,15 +588,15 @@ class mod_attendance_structure {
         $sess->includeqrcode = 0;
         $sess->rotateqrcode = 0;
         $sess->rotateqrcodesecret = '';
-
-        if (!empty(get_config('attendance', 'enablewarnings'))) {
+    
+        if (property_exists('attendance', 'enablewarnings') && !empty(get_config('attendance', 'enablewarnings'))) {
             $sess->absenteereport = empty($formdata->absenteereport) ? 0 : 1;
         }
         if (!empty($formdata->autoassignstatus)) {
             $sess->autoassignstatus = $formdata->autoassignstatus;
         }
         $studentscanmark = get_config('attendance', 'studentscanmark');
-
+    
         if (!empty($studentscanmark) &&
             !empty($formdata->studentscanmark)) {
             $sess->studentscanmark = $formdata->studentscanmark;
@@ -594,10 +605,21 @@ class mod_attendance_structure {
             if (!empty($formdata->includeqrcode)) {
                 $sess->includeqrcode = $formdata->includeqrcode;
             }
-            if (!empty($formdata->rotateqrcode)) {
+            if (isset($formdata->rotateqrcode) && !empty($formdata->rotateqrcode)) {
                 $sess->rotateqrcode = $formdata->rotateqrcode;
-                $sess->studentpassword = attendance_random_string();
-                $sess->rotateqrcodesecret = attendance_random_string();
+                // Add condition to assign studentid and rotateqrcodesecret only if the user has the capability
+                if (has_capability('mod/attendance:manageattendancesessions', $this->context)) 
+                if (has_capability('mod/attendance:manageattendancesessions', $this->context)) {
+                    if (!isset($formdata->studentid)) {
+                        throw new moodle_exception('Student ID is missing in the form data');
+                    } else {
+                        $sess->studentid = $formdata->studentid;
+                        $sess->studentpassword = attendance_random_string($sess->studentid, uniqid());
+                        $sess->rotateqrcodesecret = attendance_random_string($sess->studentid, uniqid());
+                    }
+                } else {
+                    throw new moodle_exception('You do not have permission to manage attendance sessions');
+                }
             }
         }
         if (!empty($formdata->usedefaultsubnet)) {
