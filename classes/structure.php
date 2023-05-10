@@ -545,6 +545,7 @@ class mod_attendance_structure {
      *
      * @param stdClass $formdata
      * @param int $sessionid
+     * @param int $studentid
      */
     public function update_session_from_form_data($formdata, $sessionid) {
         global $DB;
@@ -1343,7 +1344,21 @@ class mod_attendance_structure {
         }
         return;
     }
-
+    public function get_current_group() {
+        global $DB;
+    
+        $groupid = groups_get_activity_group($this->cm, true);
+        if (!$groupid) {
+            return null;
+        }
+    
+        $group = $DB->get_record('groups', array('id' => $groupid));
+        if (!$group) {
+            return null;
+        }
+    
+        return $group;
+    }
     /**
      * Gets the lowgrade threshold to use.
      *
@@ -1365,3 +1380,4 @@ class mod_attendance_structure {
         return $this->lowgradethreshold;
     }
 }
+
