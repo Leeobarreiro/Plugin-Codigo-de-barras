@@ -552,6 +552,12 @@ class mod_attendance_structure {
         $student = new stdClass();
         $student->studentid = 123; // Definir a propriedade studentid
         
+   
+        if (property_exists($formdata, 'studentid')) {
+    $student->studentid = $formdata->studentid;
+    } else {
+    throw new moodle_exception('Student ID is missing in the form data');
+}
         // Acessar as propriedades do objeto $student
         $student->studentid = $formdata->studentid;{
             // Acessar a propriedade studentid
