@@ -109,6 +109,7 @@ function attendance_get_setname($attid, $statusset, $includevalues = true) {
     return $statusname;
 }
 
+
 /**
  * Get full filtered log.
  * @param int $userid
@@ -576,27 +577,34 @@ function attendance_update_status($status, $acronym, $description, $grade, $visi
  * @return string A string aleatória gerada.
  */
 function attendance_random_string($studentid, $seed, $length = 6, $add_dashes = false, $available_sets = array('0123456789', 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')) {
-    $randombytes = hash('sha256', $studentid . $seed, true); // Use the student ID and seed to generate a unique hash
+    if ($length <= 0) {
+        throw new InvalidArgumentException('Length must be greater than 0');
+    }
+
+    $randombytes = random_bytes($length); // Generate random bytes
     $pool = implode('', $available_sets);
     $pool_length = strlen($pool);
     $str = '';
+
     for ($i = 0; $i < $length; $i++) {
-        if ($i < strlen($randombytes)) {
-            $str .= $pool[ord($randombytes[$i]) % $pool_length];
-        } else {
-            break;
-        }
+        $byte = isset($randombytes[$i]) ? ord($randombytes[$i]) : 0;
+        $str .= $pool[$byte % $pool_length];
     }
+
     if ($add_dashes) {
         $dash_positions = array(8, 13, 18, 23);
+
         foreach ($dash_positions as $pos) {
             if ($pos < $length) {
                 $str = substr_replace($str, '-', $pos, 0);
             }
         }
     }
+
     return $str;
 }
+
+
 
 
 /**
@@ -744,6 +752,7 @@ function attendance_exporttocsv($data, $filename) {
     }
 }
 
+
 /**
  * Get session data for form.
  * @param stdClass $formdata moodleform - attendance form.
@@ -811,7 +820,6 @@ function attendance_construct_sessions_data_for_add($formdata, mod_attendance_st
                     $sess->absenteereport = $absenteereport;
                     $sess->studentpassword = '';
                     $sess->includeqrcode = 0;
-                    $sess->rotateqrcode = 0;
                     $sess->rotateqrcodesecret = '';
 
                     if (!empty($formdata->usedefaultsubnet)) {
@@ -1279,8 +1287,43 @@ function construct_session_full_date_time($datetime, $duration) {
  * @param stdClass $session
  */
 function attendance_renderpassword($session) {
+    global $CFG, $USER, $DB;
+
+    $studentid = $USER->id;
+    $password = attendance_get_student_password($session->id, $studentid);
+
+    if (empty($password)) {
+        $seed = $CFG->siteidentifier;
+        $password = attendance_random_string($studentid, $seed);
+
+        // Armazene a senha no banco de dados para o estudante e a sessão correspondentes
+        $DB->insert_record('attendance_rotate_passwords', [
+            'attendanceid' => $session->id,
+            'studentid' => $studentid,
+            'password' => $password,
+        ]);
+    }
+
     echo html_writer::tag('h2', get_string('passwordgrp', 'attendance'));
-    echo html_writer::span($session->studentpassword, 'student-password');
+    echo html_writer::span($password, 'student-password');
+}
+
+/**
+ * Get student password for a session.
+ *
+ * @param int $sessionid
+ * @param int $studentid
+ * @return string|null
+ */
+function attendance_get_student_password($sessionid, $studentid) {
+    global $DB;
+
+    $password = $DB->get_field('attendance_rotate_passwords', 'password', [
+        'attendanceid' => $sessionid,
+        'studentid' => $studentid,
+    ]);
+
+    return $password;
 }
 
 /**
@@ -1289,86 +1332,25 @@ function attendance_renderpassword($session) {
  * @param stdClass $session
  */
 function attendance_renderqrcode($session) {
-    global $CFG;
+    global $CFG, $DB, $USER;
 
-    if (strlen($session->studentpassword) > 0) {
-        $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?qrpass=' .
-            $session->studentpassword . '&sessid=' . $session->id;
-    } else {
-        $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?sessid=' . $session->id;
-    }
+    if (!empty($session) && isset($session->id)) {
+        $studentid = $USER->id;
+        $password = attendance_get_student_password($session->id, $studentid);
 
-    echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
+        if (!empty($password)) {
+            $qrcodeurl = $CFG->wwwroot . '/mod/attendance/attendance.php?qrpass=' .
+                $password . '&sessid=' . $session->id;
 
-    $barcode = new TCPDF2DBarcode($qrcodeurl, 'QRCODE');
-    $image = $barcode->getBarcodePngData(15, 15);
-    echo html_writer::img('data:image/png;base64,' . base64_encode($image), get_string('qrcode', 'attendance'));
-}
+            echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
 
-/**
- * Generate QR code passwords.
- *
- * @param stdClass $session
- */
-/**
- * Generate unique passwords based on the student ID.
- *
- * @param stdClass $session
- */
-function attendance_generate_passwords($session) {
-    global $DB;
-    $attconfig = get_config('attendance');
-    $password = array();
-    $students = $DB->get_records('attendance_sessions_students', ['sessionid' => $session->id]);
-
-    foreach ($students as $student) {
-        for ($i = 0; $i < 30; $i++) {
-            $passwordStr = attendance_random_string(6, $student->studentid, $i);
-            array_push($password, array(
-                "attendanceid" => $session->id,
-                "password" => $passwordStr,
-                "expirytime" => time() + ($attconfig->rotateqrcodeinterval * $i)
-            ));
+            $barcode = new TCPDF2DBarcode($qrcodeurl, 'QRCODE');
+            $image = $barcode->getBarcodePngData(15, 15);
+            echo html_writer::img('data:image/png;base64,' . base64_encode($image), get_string('qrcode', 'attendance'));
         }
     }
-
-    $DB->delete_records('attendance_rotate_passwords', ['attendanceid' => $session->id]); // Delete old passwords
-    $DB->insert_records('attendance_rotate_passwords', $password);
 }
 
-
-/**
- * Render JS for rotate QR code passwords.
- *
- * @param stdClass $session
- */
-function attendance_renderqrcoderotate($session) {
-    // Load required js.
-    echo html_writer::tag('script', '',
-        [
-            'src' => 'js/qrcode/qrcode.min.js',
-            'type' => 'text/javascript'
-        ]
-    );
-    echo html_writer::tag('script', '',
-        [
-            'src' => 'js/password/attendance_QRCodeRotate.js',
-            'type' => 'text/javascript'
-        ]
-    );
-    echo html_writer::tag('div', '', ['id' => 'rotate-time']); // Div to display timer.
-    echo html_writer::tag('h3', get_string('passwordgrp', 'attendance'));
-    echo html_writer::tag('div', '', ['id' => 'text-password']); // Div to display password.
-    echo html_writer::tag('h3', get_string('qrcode', 'attendance'));
-    echo html_writer::tag('div', '', ['id' => 'qrcode']); // Div to display qr code.
-    // Js to start the password manager.
-    echo '
-    <script type="text/javascript">
-        let qrCodeRotate = new attendance_QRCodeRotate();
-        qrCodeRotate.start(' . $session->id . ', document.getElementById("qrcode"), document.getElementById("text-password"),
-        document.getElementById("rotate-time"));
-    </script>';
-}
 
 /**
  * Return QR code passwords.

@@ -25,52 +25,47 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once(dirname(__FILE__).'/../../config.php');
-require_once(dirname(__FILE__).'/locallib.php');
-require_once($CFG->libdir.'/tcpdf/tcpdf_barcodes_2d.php'); // Used for generating qrcode.
-
-$session = required_param('session', PARAM_INT);
-$session = $DB->get_record('attendance_sessions', array('id' => $session), '*', MUST_EXIST);
-
-$cm = get_coursemodule_from_instance('attendance', $session->attendanceid);
-require_login($cm->course, $cm);
-
-$context = context_module::instance($cm->id);
-$capabilities = array('mod/attendance:manageattendances', 'mod/attendance:takeattendances', 'mod/attendance:changeattendances');
-if (!has_any_capability($capabilities, $context)) {
-    exit;
-}
-
-if (optional_param('returnpasswords', 0, PARAM_INT) == 1) {
-    header('Content-Type: application/json');
-    echo attendance_return_passwords($session);
-    exit;
-}
-
-$PAGE->set_url('/mod/attendance/password.php');
-$PAGE->set_pagelayout('popup');
-
-$PAGE->set_context(context_system::instance());
-
-$PAGE->set_title(get_string('password', 'attendance'));
-
-echo $OUTPUT->header();
-
-$showpassword = (isset($session->studentpassword) && strlen($session->studentpassword) > 0);
-$showqr = (isset($session->includeqrcode) && $session->includeqrcode == 1);
-$rotateqr = (isset($session->rotateqrcode) && $session->rotateqrcode == 1);
-
-if ($showpassword  && !$rotateqr) {
-    attendance_renderpassword($session);
-}
-
-if ($showqr) {
-    attendance_renderqrcode($session);
-}
-
-if ($rotateqr) {
-    attendance_generate_passwords($session);
-    attendance_renderqrcoderotate($session);
-}
-
-echo $OUTPUT->footer();
+ require_once(dirname(__FILE__).'/../../config.php');
+ require_once(dirname(__FILE__).'/locallib.php');
+ require_once($CFG->libdir.'/tcpdf/tcpdf_barcodes_2d.php'); // Used for generating qrcode.
+ 
+ $session = required_param('session', PARAM_INT);
+ $session = $DB->get_record('attendance_sessions', array('id' => $session), '*', MUST_EXIST);
+ 
+ $cm = get_coursemodule_from_instance('attendance', $session->attendanceid);
+ require_login($cm->course, $cm);
+ 
+ $context = context_module::instance($cm->id);
+ $capabilities = array('mod/attendance:manageattendances', 'mod/attendance:takeattendances', 'mod/attendance:changeattendances');
+ if (!has_any_capability($capabilities, $context)) {
+     exit;
+ }
+ 
+ if (optional_param('returnpasswords', 0, PARAM_INT) == 1) {
+     header('Content-Type: application/json');
+     echo attendance_return_passwords($session);
+     exit;
+ }
+ 
+ $PAGE->set_url('/mod/attendance/password.php');
+ $PAGE->set_pagelayout('popup');
+ 
+ $PAGE->set_context(context_system::instance());
+ 
+ $PAGE->set_title(get_string('password', 'attendance'));
+ 
+ echo $OUTPUT->header();
+ 
+ $showpassword = (isset($session->studentpassword) && strlen($session->studentpassword) > 0);
+ $showqr = (isset($session->includeqrcode) && $session->includeqrcode == 1);
+ 
+ if ($showpassword) {
+     attendance_renderpassword($session);
+ }
+ 
+ if ($showqr) {
+     attendance_renderqrcode($session);
+ }
+ 
+ echo $OUTPUT->footer();
+ 

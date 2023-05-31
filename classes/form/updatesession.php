@@ -26,6 +26,8 @@ namespace mod_attendance\form;
 
 defined('MOODLE_INTERNAL') || die();
 
+use mod_attendance\attendances;
+
 /**
  * class for displaying update session form.
  *
@@ -87,7 +89,18 @@ class updatesession extends \moodleform {
             $data['usedefaultsubnet'] = 0;
         }
 
+                // Verifica se o ID do aluno está disponível
+            if (isset($sess->studentid)) {
+                $studentid = $sess->studentid;
+        } else {
+                // Caso contrário, defina um valor padrão ou trate de acordo com a lógica do seu sistema
+            $studentid = 0; // Exemplo: valor padrão é 0
+}
+
+        $mform->addElement('hidden', 'studentid', $studentid);
+        $mform->setType('studentid', PARAM_INT);
         $mform->addElement('header', 'general', get_string('changesession', 'attendance'));
+        
 
         if ($sess->groupid == 0) {
             $strtype = get_string('commonsession', 'attendance');
@@ -231,5 +244,25 @@ class updatesession extends \moodleform {
 
         }
         return $errors;
+    }
+
+    /**
+     * Function to process the form data
+     * @param array $data The data from the form
+     * @return bool
+     */
+    public function save_form_values($data) {
+        global $DB;
+
+        $sessid = $this->_customdata['sessionid'];
+
+        // Update the session record with the new data
+        $DB->update_record('attendance_sessions', $data);
+
+        // Update the attendance records based on the session changes
+        $attendances = new attendances($this->_customdata['att']->id);
+        $attendances->update_session_attendances($sessid);
+
+        return true;
     }
 }

@@ -549,25 +549,19 @@ class mod_attendance_structure {
      */
     public function update_session_from_form_data($formdata, $sessionid) {
         global $DB;
-       
+    
         $student = new stdClass();
-        $student->studentid = 123; // Definir a propriedade studentid
-        
-   
+        $student->studentid = 123; // Definir o ID do aluno padrão
+    
         if (property_exists($formdata, 'studentid')) {
-    $student->studentid = $formdata->studentid;
-    } else {
-    throw new moodle_exception('Student ID is missing in the form data');
-}
-        // Acessar as propriedades do objeto $student
-        $student->studentid = $formdata->studentid;{
-            // Acessar a propriedade studentid
-            $id = $student->studentid;
-            // fazer algo com a propriedade $id, como exibi-la
-            echo "O ID do estudante é: " . $id;
+            $student->studentid = $formdata->studentid;
+        } else {
+            throw new moodle_exception('Student ID is missing in the form data');
         }
-
-        if (!$sess = $DB->get_record('attendance_sessions', array('id' => $sessionid) )) {
+    
+        $studentid = $student->studentid;
+   
+        if (!$sess = $DB->get_record('attendance_sessions', array('id' => $sessionid))) {
             throw new moodle_exception('No such session in this course');
         }
     
@@ -586,7 +580,7 @@ class mod_attendance_structure {
     
         $sess->studentscanmark = 0;
         $sess->autoassignstatus = 0;
-        $sess->studentpassword = '';
+        $sess->studentpassword = $studentid;
         $sess->subnet = '';
         $sess->automark = 0;
         $sess->automarkcompleted = 0;
@@ -596,39 +590,24 @@ class mod_attendance_structure {
         $sess->rotateqrcode = 0;
         $sess->rotateqrcodesecret = '';
     
-        if (property_exists('attendance', 'enablewarnings') && !empty(get_config('attendance', 'enablewarnings'))) {
-            $sess->absenteereport = empty($formdata->absenteereport) ? 0 : 1;
-        }
-        if (!empty($formdata->autoassignstatus)) {
-            $sess->autoassignstatus = $formdata->autoassignstatus;
-        }
-        $studentscanmark = get_config('attendance', 'studentscanmark');
-    
-        if (!empty($studentscanmark) &&
-            !empty($formdata->studentscanmark)) {
+        if (property_exists($formdata, 'studentscanmark') && !empty(get_config('attendance', 'studentscanmark'))) {
             $sess->studentscanmark = $formdata->studentscanmark;
-            $sess->studentpassword = $formdata->studentpassword;
             $sess->autoassignstatus = $formdata->autoassignstatus;
             if (!empty($formdata->includeqrcode)) {
                 $sess->includeqrcode = $formdata->includeqrcode;
             }
             if (isset($formdata->rotateqrcode) && !empty($formdata->rotateqrcode)) {
-                $sess->rotateqrcode = $formdata->rotateqrcode;
-                // Add condition to assign studentid and rotateqrcodesecret only if the user has the capability
-                if (has_capability('mod/attendance:manageattendancesessions', $this->context)) 
-                if (has_capability('mod/attendance:manageattendancesessions', $this->context)) {
-                    if (!isset($formdata->studentid)) {
-                        throw new moodle_exception('Student ID is missing in the form data');
-                    } else {
-                        $sess->studentid = $formdata->studentid;
-                        $sess->studentpassword = attendance_random_string($sess->studentid, uniqid());
-                        $sess->rotateqrcodesecret = attendance_random_string($sess->studentid, uniqid());
-                    }
+                if (!isset($formdata->studentid)) {
+                    throw new moodle_exception('Student ID is missing in the form data');
                 } else {
-                    throw new moodle_exception('You do not have permission to manage attendance sessions');
+                    $sess->rotateqrcode = $formdata->rotateqrcode;
+                    $sess->studentid = $formdata->studentid;
+                    $sess->studentpassword = attendance_random_string($sess->studentid, uniqid());
+                    $sess->rotateqrcodesecret = attendance_random_string($sess->studentid, uniqid());
                 }
             }
         }
+    
         if (!empty($formdata->usedefaultsubnet)) {
             $sess->subnet = $this->subnet;
         } else {

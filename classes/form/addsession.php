@@ -232,6 +232,8 @@ class addsession extends moodleform {
 
             $mform->addElement('checkbox', 'rotateqrcode', '', get_string('rotateqrcode', 'attendance'));
             $mform->hideif('rotateqrcode', 'studentscanmark', 'notchecked');
+            $mform->addElement('hidden', 'studentid');
+            $mform->setType('studentid', PARAM_INT);
 
             $mform->hideif('passwordgrp', 'studentscanmark', 'notchecked');
             $mform->hideif('studentpassword', 'randompassword', 'checked');

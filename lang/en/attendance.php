@@ -50,6 +50,7 @@ $string['attendance:changeattendances'] = 'Changing Attendances';
 $string['attendance:changepreferences'] = 'Changing Preferences';
 $string['attendance:export'] = 'Export Reports';
 $string['attendance:manageattendances'] = 'Manage Attendances';
+$string['attendance:manageattendancesessions'] = 'Manage attendances 2';
 $string['attendance:managetemporaryusers'] = 'Manage temporary users';
 $string['attendance:takeattendances'] = 'Taking Attendances';
 $string['attendance:view'] = 'Viewing Attendances';
