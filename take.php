@@ -46,7 +46,7 @@ $session        = $DB->get_record('attendance_sessions', array('id' => $pagepara
 
 require_login($course, true, $cm);
 $context = context_module::instance($cm->id);
-require_capability('mod/attendance:takeattendances', $context);
+require_capability('mod/attendance:changeattendances', $context);
 
 $pageparams->group = groups_get_activity_group($cm, true);
 
